@@ -86,9 +86,13 @@ unit-tests:
   needs: []
   #[why] ci-linux, not the ruby image: the Makefile runs its recipes under zsh, which the stock
   #   ruby image does not carry, so `make test` dies with "zsh: No such file or directory"
+  #[why] debian ships bundler only as the versioned `bundle3.1`, so the unversioned binary is
+  #   installed as a user gem and its bindir put on PATH, the same way repo-prepare-deps does it
   image: $CI_IMAGE
   before_script:
-    - bundle install --quiet
+    - command -v bundle >/dev/null || gem install --user-install --no-document bundler
+    - export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"
+    - make install
   script:
     - make test
 
