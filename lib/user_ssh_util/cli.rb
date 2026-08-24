@@ -20,7 +20,7 @@ module UserSshUtil
   class Cli
     UsageError = Class.new(StandardError)
 
-    SUBCOMMANDS = %w[sync generate publish remove rotate status].freeze
+    SUBCOMMANDS = %w[sync generate publish remove rotate status check].freeze
 
     USAGE = <<~TEXT
       usage: user-ssh-util <command> [options]
@@ -33,6 +33,7 @@ module UserSshUtil
         remove    <name> [--platform=gitlab,github]
         rotate    <name>
         status
+        check     [name] [--platform=gitlab,github]
     TEXT
 
     Clock = Struct.new(:frozen) do
@@ -126,7 +127,47 @@ module UserSshUtil
       state.names.each { @out.puts(status_line(state, _1)) }
     end
 
+    # check proves each declared key still works against the platforms it publishes to.
+    #
+    # An access key is proven by logging in, a signing key by signing and verifying: github
+    # refuses ssh login to a signing key by design, so a login check would fail a healthy key.
+    def check(options)
+      config, _state = load_pair(options)
+      keys = check_targets(config, options)
+      results = keys.flat_map { check_key(_1, options) }
+      results.each { @out.puts(check_line(_1)) }
+      raise CommandFailed, "#{results.count { !_1[:ok] }} of #{results.size} checks failed" if results.any? { !_1[:ok] }
+    end
+
     private
+
+    def check_targets(config, options)
+      return [fetch_key(config, options[:args].first)] unless options[:args].empty?
+
+      config.keys.values
+    end
+
+    def check_key(key, options)
+      private_path = paths(options).private_key(key.name)
+      return [{ key: key.name, platform: "disk", ok: false, detail: "no keypair at #{private_path}" }] unless private_path.exist?
+      return [check_signing(key, private_path)] if key.type == Sync::SIGNING_TYPE
+
+      (options[:platform] || key.publish_to).map { check_access(key, _1, private_path) }
+    end
+
+    def check_signing(key, private_path)
+      ok = Signer.new(@runner).usable?(private_path, email: key.email)
+      { key: key.name, platform: "signing", ok: ok, detail: ok ? "signs and verifies" : "cannot sign or verify" }
+    end
+
+    def check_access(key, platform, private_path)
+      ok = registry.fetch(platform).verify(private_path)
+      { key: key.name, platform: platform, ok: ok, detail: ok ? "authenticated" : "rejected" }
+    end
+
+    def check_line(result)
+      "#{result[:ok] ? 'ok  ' : 'FAIL'}\t#{result[:key]}\t#{result[:platform]}\t#{result[:detail]}"
+    end
 
     def status_line(state, name)
       entry = state.key(name)
