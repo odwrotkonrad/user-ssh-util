@@ -88,8 +88,11 @@ unit-tests:
   #   ruby image does not carry, so `make test` dies with "zsh: No such file or directory"
   #[why] debian ships bundler only as the versioned `bundle3.1`, so the unversioned binary is
   #   installed as a user gem and its bindir put on PATH, the same way repo-prepare-deps does it
+  #[why] openssh-client: the keypair and rotator suites drive a real ssh-keygen rather than a
+  #   double, and ci-linux carries no ssh binaries
   image: $CI_IMAGE
   before_script:
+    - apt-get update -qq && apt-get install -y -qq --no-install-recommends openssh-client > /dev/null
     - command -v bundle >/dev/null || gem install --user-install --no-document bundler
     - export PATH="$(ruby -e 'print Gem.user_dir')/bin:$PATH"
     - make install
