@@ -84,6 +84,11 @@ unit-tests:
     - gke-linux-amd64-small
   stage: validate
   needs: []
+  #[why] ci-linux, not the ruby image: the Makefile runs its recipes under zsh, which the stock
+  #   ruby image does not carry, so `make test` dies with "zsh: No such file or directory"
+  image: $CI_IMAGE
+  before_script:
+    - bundle install --quiet
   script:
     - make test
 
