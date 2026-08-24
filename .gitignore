@@ -1,0 +1,17 @@
+.user/
+.bundle/
+vendor/
+#[why] --pwd writes both beside the repo root: local scratch, never tracked
+/user-ssh-util.yml
+/user-ssh-util.state.yml
+##[>] 🤖
+/AGENTS.md
+/CLAUDE.md
+/assets/data/makefile.agents.md
+/assets/data/repo-structure.md
+/assets/docs-agents/purpose.md
+#[why] shared render + tagging payload: authored in cross-repo/misc, rendered here, never tracked
+/shared/
+/.env
+##[<] 🤖
+!.repo/

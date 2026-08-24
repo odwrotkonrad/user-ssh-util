@@ -1,0 +1,114 @@
+##[>] 🤖🤖
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+#[why] all CI runs on the self-hosted GKE runners: no SaaS compute minutes remain
+#[why] a superseded pipeline holds pods for a commit nobody will merge: cancel it and let
+#   the autoscaler release the node. jobs with an external side effect opt out individually
+default:
+  interruptible: true
+  #[why] spot nodes are preempted mid-job and the manager itself runs on spot: infrastructure
+  #   failures are expected, not exceptional. 2 is gitlab's hard maximum, so 3 attempts in total.
+  #   retries cover runner and API faults only, never a failing script
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - api_failure
+      - stuck_or_timeout_failure
+      - scheduler_failure
+      - unknown_failure
+  tags:
+    - gke-linux-amd64
+  image: $ARTIFACT_REGISTRY_PROXY_DOCKERHUB/library/ruby:3.4
+  before_script:
+    - bundle install --quiet
+
+stages:
+  - validate
+  - release
+
+variables:
+  ARTIFACT_REGISTRY: $GRP_KO_VAR_ARTIFACT_REGISTRY
+  ARTIFACT_REGISTRY_PROXY_DOCKERHUB: $GRP_KO_VAR_ARTIFACT_REGISTRY_PROXY_DOCKERHUB
+  OCI_IMAGES_CI_LINUX_REF: $GRP_KO_VAR_OCI_IMAGES_CI_LINUX_REF
+  CHE_SCHEMA_REF: $GRP_KO_VAR_CHE_SCHEMA_REF
+  PROSE_SPEC_REF: $GRP_KO_VAR_PROSE_SPEC_REF
+  PROSE_ASSETS_REF: $GRP_KO_VAR_PROSE_ASSETS_REF
+  MISC_REF: $GRP_KO_VAR_MISC_REF
+  AI_CONFIGS_REF: $GRP_KO_VAR_AI_CONFIGS_REF
+  CI_IMAGE: $ARTIFACT_REGISTRY/ci-linux:$OCI_IMAGES_CI_LINUX_REF
+
+validate-pre-commit-all:
+  rules:
+    - changes:
+        - .gitlab-ci.yml
+        - .env.tpl
+        - che.yml
+        - Makefile
+        - lefthook.yml
+        - .repo/*.tpl
+        - .repo/dependency-graph.yml
+        - .repo/artifacts-consumed.yml
+        - exe/**/*
+        - lib/**/*
+        - test/**/*
+        - Gemfile
+        - Gemfile.lock
+        - README.md
+  tags:
+    - gke-linux-amd64-small
+  stage: validate
+  image: $CI_IMAGE
+  needs: []
+  before_script: []
+  script:
+    - make repo-ci-precommit-all
+    - git diff --exit-code HEAD
+
+#[why] ssh-keygen runs for real against a tmpdir HOME: the image carries openssh-client already,
+#   so the suite needs no platform auth and no network
+unit-tests:
+  rules:
+    - changes:
+        - exe/**/*
+        - lib/**/*
+        - test/**/*
+        - Gemfile
+        - Gemfile.lock
+        - Makefile
+        - .gitlab-ci.yml
+  tags:
+    - gke-linux-amd64-small
+  stage: validate
+  needs: []
+  script:
+    - make test
+
+#[why] a merge to the default branch is the release event: mint the next semver tag so consumers can
+#   pin a version instead of tracking a moving branch. tag only, no release object: nothing here ships
+#   an artifact
+tag-mint:
+  tags:
+    - gke-linux-amd64-small
+  stage: release
+  image: $CI_IMAGE
+  #[why] the default before_script installs gems for the ruby image every other job runs on. this
+  #   job runs on ci-linux, which carries no bundler, so it opts out rather than inheriting it
+  before_script: []
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - exe/**/*
+        - lib/**/*
+        - test/**/*
+        - che.yml
+        - Makefile
+  variables:
+    GIT_DEPTH: "0"
+    TAG_TOKEN: $REPO_PROTECTED_VAR_BOT_TAG_TOKEN
+  script:
+    - make tag-mint
+##[<] 🤖🤖

@@ -1,0 +1,11 @@
+##[>] 🤖🤖
+extends:
+  - ~/.config/lefthook/lefthook.yml
+
+pre-commit:
+  jobs:
+    - name: docsgen
+      env:
+        MK_DRY_RUN: ""
+      run: make render-templates && { git diff --exit-code || { echo "regeneration changed tracked files (diff above), restage and re-commit"; exit 1; } }
+##[<] 🤖🤖
