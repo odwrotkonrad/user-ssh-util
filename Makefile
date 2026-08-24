@@ -51,8 +51,11 @@ repo-prepare-deps:
 test:
 	@bundle exec ruby -Ilib -Itest -e 'Dir.glob("test/**/*_test.rb").each { |f| require File.expand_path(f) }'
 
+#[why] refuses to run under CI: these scripts create and delete real keys on the user's own
+#   gitlab and github accounts, which no pipeline is authenticated for or entitled to touch
 #[what] run the local end-to-end checks against the real gitlab/github accounts (never in CI)
 e2e:
+	@[[ -z $${CI:-} ]] || { print -u2 "e2e touches real accounts, refusing to run in CI"; exit 1; }
 	@test/e2e/lifecycle.zsh
 	@test/e2e/adoption.zsh
 ##[<] Test
