@@ -433,6 +433,52 @@ module UserSshUtil
       refute_match(/warning/, @reporter.string)
     end
 
+    def test_check_reports_a_reachable_key_per_platform
+      cli_run(%w[sync])
+
+      assert_equal 0, cli_run(%w[check])
+      assert_match(/ok\s+id_access\s+gitlab\s+authenticated/, @out.string)
+    end
+
+    # github grants a signing key no ssh access by design, so a login check would fail a healthy key
+    def test_check_proves_a_signing_key_by_signing_not_by_login
+      write_signing_config
+      cli_run(%w[sync])
+      @out.truncate(0)
+
+      cli_run(%w[check])
+
+      assert_match(/id_sign\s+signing/, @out.string)
+      refute_match(/id_sign\s+gitlab/, @out.string)
+    end
+
+    def test_check_fails_when_the_keypair_is_absent
+      assert_equal 1, cli_run(%w[check])
+
+      assert_match(/FAIL\s+id_access\s+disk\s+no keypair/, @out.string)
+      assert_match(/1 of 1 checks failed/, @reporter.string)
+    end
+
+    def test_check_rejects_a_key_the_platform_refuses
+      cli_run(%w[sync])
+      @runner.stub(/^ssh /, stderr: "Permission denied (publickey).", exitstatus: 255)
+      @out.truncate(0)
+
+      assert_equal 1, cli_run(%w[check])
+      assert_match(/FAIL\s+id_access\s+gitlab\s+rejected/, @out.string)
+    end
+
+    def test_check_narrows_to_one_named_key
+      write_two_key_config
+      cli_run(%w[sync])
+      @out.truncate(0)
+
+      cli_run(%w[check id_other])
+
+      assert_match(/id_other/, @out.string)
+      refute_match(/id_access/, @out.string)
+    end
+
     def test_status_lists_each_recorded_key
       cli_run(%w[sync])
       @out.truncate(0)
