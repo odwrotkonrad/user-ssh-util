@@ -50,8 +50,9 @@ validate-pre-commit-all:
         - Makefile
         - lefthook.yml
         - .repo/*.tpl
-        - .repo/dependency-graph.yml
-        - .repo/artifacts-consumed.yml
+        - .repo/deps-graph.yml
+        - .repo/upstream.yml
+        - .repo/upstream.env
         - exe/**/*
         - lib/**/*
         - test/**/*
