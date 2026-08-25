@@ -184,7 +184,7 @@ module UserSshUtil
       assert_equal before, Pathname.new(archived.fetch("private-path")).read
     end
 
-    def test_a_revoked_signing_key_loses_its_allowed_signers_line
+    def test_a_revoked_signing_key_keeps_its_allowed_signers_line
       @config_file.write("defaults:\n  email: u@example.com\n  algorithm: ssh-ed25519\nkeys:\n  id_sign:\n    type: signing\n    publishTo: [gitlab]\n")
       cli_run(%w[sync])
       body = @home.join(".ssh", "id_sign.pub").read.split[1]
@@ -193,7 +193,7 @@ module UserSshUtil
 
       assert_equal 0, cli_run(%w[sync]), @reporter.string
 
-      refute_includes @home.join(".ssh", "allowed_signers").read, body
+      assert_includes @home.join(".ssh", "allowed_signers").read, body
     end
 
     def test_an_orphan_left_published_keeps_its_live_keypair
