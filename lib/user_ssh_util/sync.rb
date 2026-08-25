@@ -83,7 +83,7 @@ module UserSshUtil
       private_path = @paths.private_key(key.name)
       public_path = @keypair.generate(private_path: private_path, algorithm: key.algorithm, comment: key.email)
       @out.puts("created #{key.name}")
-      register_signer(key, private_path)
+      register_signer(key, private_path, valid_after: @clock.now)
 
       @state.record_created(
         key.name,
@@ -105,7 +105,7 @@ module UserSshUtil
       private_path = @paths.private_key(key.name)
       public_key = @keypair.public_key(private_path)
       @out.puts("adopted #{key.name}")
-      register_signer(key, private_path)
+      register_signer(key, private_path, valid_after: private_path.mtime)
 
       warn_on_algorithm_drift(key, public_key)
       @state.record_created(
@@ -136,26 +136,15 @@ module UserSshUtil
       )
     end
 
-    #[why] the config no longer declares this key, so its type and material come from state
-    def deregister_signer(name, backup)
-      entry = @state.key(name)
-      return nil unless entry && entry["type"] == SIGNING_TYPE
-
-      removed = @allowed_signers.remove(
-        public_key: entry["public-key"], backup_path: backup.join("allowed_signers")
-      )
-      @out.puts("dropped #{name} from allowed_signers") if removed
-      removed
-    end
-
     # register_signer puts a newly created signing key into allowed_signers, where rotation expects it.
-    def register_signer(key, private_path)
+    def register_signer(key, private_path, valid_after:)
       return unless key.type == SIGNING_TYPE
 
       timestamp = @clock.now.utc.strftime("%Y%m%dT%H%M%SZ")
       @allowed_signers.add(
         email: key.email,
         public_key: @keypair.public_key(private_path),
+        valid_after: valid_after,
         backup_path: @paths.backup_dir(key.name, timestamp).join("allowed_signers")
       )
       @out.puts("registered #{key.name} in allowed_signers")
@@ -200,10 +189,8 @@ module UserSshUtil
       timestamp = @clock.now.utc.strftime("%Y%m%dT%H%M%SZ")
       backup = @paths.backup_dir(name, timestamp)
       archived = @keypair.move(from_private: private_path, to_private: backup.join(name))
-      signers_backup = deregister_signer(name, backup)
 
-      @state.archive(name, backup_private: archived, backup_public: @keypair.public_path_for(archived),
-                           allowed_signers_backup: signers_backup)
+      @state.archive(name, backup_private: archived, backup_public: @keypair.public_path_for(archived))
       @state.write
       @out.puts("archived #{name} to #{archived}")
     end

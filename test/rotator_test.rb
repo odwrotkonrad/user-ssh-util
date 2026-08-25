@@ -154,7 +154,7 @@ module UserSshUtil
       assert @runner.ran?(%r{ssh-add .*/\.ssh/k$})
     end
 
-    def test_a_signing_key_swaps_allowed_signers
+    def test_a_signing_key_appends_to_allowed_signers_keeping_the_superseded_key
       @paths.allowed_signers.dirname.mkpath
       @paths.allowed_signers.write("u@example.com #{OLD_PUBLIC}\n")
 
@@ -162,8 +162,9 @@ module UserSshUtil
 
       signers = @paths.allowed_signers.read
 
-      refute_includes signers, "AAAAOLDMATERIAL"
+      assert_includes signers, "AAAAOLDMATERIAL"
       assert_includes signers, @keypair.public_key(@paths.private_key("k"))
+      assert_match(/valid-after="\d{8}"/, signers)
     end
 
     def test_a_signing_rotation_backs_up_the_previous_files

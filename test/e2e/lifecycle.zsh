@@ -86,7 +86,7 @@ assert_on_platform github $ACCESS authentication
 assert_on_platform gitlab $SIGNING signing
 assert_on_platform github $SIGNING signing
 
-assert_signer "$SIGNING_OLD" no "the superseded signer body is gone"
+assert_signer "$SIGNING_OLD" yes "the superseded signer body is kept, so its commits still verify"
 assert_signer "$(key_body $SSH_DIR/$SIGNING.pub)" yes "the replacement signer body is present"
 
 assert_archived $ACCESS "$ACCESS_OLD"
@@ -112,8 +112,9 @@ assert_no_local $ACCESS
 assert_no_local $SIGNING
 assert_archived $ACCESS "$ROTATED_ACCESS"
 assert_archived $SIGNING "$ROTATED_SIGNING"
-assert_signer "$ROTATED_SIGNING" no "the revoked signer body is gone from allowed_signers"
-assert_eq "unrelated allowed_signers lines survive" "$SIGNERS_BEFORE" "$(signers_count)"
+assert_signer "$ROTATED_SIGNING" yes "the revoked signer body is kept in allowed_signers"
+assert_eq "no allowed_signers line was ever dropped" kept \
+  "$([[ $(signers_count) -ge $SIGNERS_BEFORE ]] && print kept || print dropped)"
 
 ##[<] step 4
 

@@ -115,10 +115,10 @@ module UserSshUtil
       return {} unless key.type == SIGNING_TYPE
 
       {
-        allowed_signers_backup: @allowed_signers.swap(
+        allowed_signers_backup: @allowed_signers.add(
           email: key.email,
-          old_public_key: @state.key(key.name)["public-key"],
-          new_public_key: @keypair.public_key(staged),
+          public_key: @keypair.public_key(staged),
+          valid_after: @clock.now,
           backup_path: backup.join("allowed_signers")
         ),
         known_hosts_backup: @known_hosts.refresh(hosts: hosts_for(key), backup_path: backup.join("known_hosts"))

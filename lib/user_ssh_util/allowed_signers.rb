@@ -3,31 +3,19 @@ require "fileutils"
 require "pathname"
 
 module UserSshUtil
-  # AllowedSigners keeps ~/.ssh/allowed_signers in step with a rotated signing key.
+  # AllowedSigners appends signing keys to ~/.ssh/allowed_signers, stamped with the date they became valid.
   class AllowedSigners
     def initialize(path)
       @path = Pathname.new(path)
     end
 
-    # add registers a public key for email, replacing any earlier entry for that same key.
-    def add(email:, public_key:, backup_path:)
-      swap(email: email, old_public_key: public_key, new_public_key: public_key, backup_path: backup_path)
-    end
-
-    # swap drops the superseded public key and adds the replacement, backing up the previous file.
-    def swap(email:, old_public_key:, new_public_key:, backup_path:)
-      backup = back_up(backup_path)
-      kept = lines.reject { signs_with?(_1, old_public_key) }
-      write(kept + ["#{email} #{new_public_key}"])
-      backup
-    end
-
-    # remove drops every entry signing with public_key, backing up the previous file.
-    def remove(public_key:, backup_path:)
-      return nil unless @path.exist?
+    # add appends a public key for email, stamped valid-after, keeping every existing entry.
+    def add(email:, public_key:, valid_after:, backup_path:)
+      existing = lines
+      return nil if existing.any? { signs_with?(_1, public_key) }
 
       backup = back_up(backup_path)
-      write(lines.reject { signs_with?(_1, public_key) })
+      write(existing + ["#{email} valid-after=\"#{stamp(valid_after)}\" #{public_key}"])
       backup
     end
 
@@ -48,6 +36,8 @@ module UserSshUtil
     end
 
     def key_body_of(public_key) = public_key.to_s.split[1]
+
+    def stamp(valid_after) = valid_after.strftime("%Y%m%d")
 
     def back_up(backup_path)
       return nil unless @path.exist?
