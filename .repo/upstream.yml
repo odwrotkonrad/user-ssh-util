@@ -1,11 +1,11 @@
 ##[>] 🤖
 upstream:
-  - uri: gitlab.com/konradodwrot/ai-harness/configs
+  - uri: gitlab.com/konradodwrot/ai-harness/ai-tools-configs
     type: gitRepository
-    versionEnvVar: AI_CONFIGS_REF
-  - uri: gitlab.com/konradodwrot/configs
+    versionEnvVar: AI_TOOLS_CONFIGS_REF
+  - uri: gitlab.com/konradodwrot/tools-configs
     type: gitRepository
-    versionEnvVar: CONFIGS_REF
+    versionEnvVar: TOOLS_CONFIGS_REF
   - uri: gitlab.com/konradodwrot/cross-repo/misc
     type: gitRepository
     versionEnvVar: MISC_REF
