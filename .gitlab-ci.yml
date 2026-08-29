@@ -45,8 +45,7 @@ validate-pre-commit-all:
   rules:
     - changes:
         - .gitlab-ci.yml
-        - .env.tpl
-        - che.yml
+        - .che/**/*
         - Makefile
         - lefthook.yml
         - .repo/*.tpl
@@ -117,7 +116,7 @@ tag-mint:
         - exe/**/*
         - lib/**/*
         - test/**/*
-        - che.yml
+        - .che/**/*
         - Makefile
   variables:
     GIT_DEPTH: "0"
