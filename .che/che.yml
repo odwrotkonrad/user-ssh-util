@@ -4,6 +4,8 @@ include:
   sources: [.che/repo-git-tracked, .che/repo-git-untracked]
 
 devEnv:
+  options:
+    autoDiscover: false
   include:
     installPackages:
       - ruby
