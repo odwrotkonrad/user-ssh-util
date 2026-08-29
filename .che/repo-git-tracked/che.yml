@@ -2,6 +2,9 @@
 ##[>] 🤖🤖
 ontoRepo:
   include:
+    makeCopies:
+      - source: "git::gitlab.com/konradodwrot/cross-repo/prose/assets@${{ var.PROSE_ASSETS_REF }}//shared/license/LICENSE"
+        dest: LICENSE
     renderTemplates:
       - source: "git::gitlab.com/konradodwrot/cross-repo/prose/assets@${{ var.PROSE_ASSETS_REF }}"
         options:
@@ -9,8 +12,6 @@ ontoRepo:
         <<<:
           - source: //repos/user-ssh-util/purpose.md
             dest: assets/docs-agents/purpose.md
-          - source: //shared/license/LICENSE
-            dest: LICENSE
           - dest: assets/data
             <<<:
               - source: //templates/2-data
