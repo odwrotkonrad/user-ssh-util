@@ -1,4 +1,17 @@
 ##[>] 🤖🤖
+include:
+  - project: konradodwrot/centralized/assets/generic
+    ref: $GRP_KO_VAR_CENTRALIZED_ASSETS_GENERIC_REF
+    file:
+      - consumer-repo-config/files-generation/templates/FilesTrackedVerify.gitlab-ci.yml
+      - consumer-repo-config/precommit-lefthook/templates/PrecommitChanged.gitlab-ci.yml
+      - consumer-repo-config/precommit-lefthook/templates/PrecommitAll.gitlab-ci.yml
+  - project: konradodwrot/centralized/assets/generic
+    ref: $GRP_KO_VAR_CENTRALIZED_ASSETS_GENERIC_REF
+    file: consumer-repo-config/release/templates/TagMint.gitlab-ci.yml
+    inputs:
+      changes: [exe/**/*, lib/**/*, test/**/*, .che/**/*, Makefile]
+
 workflow:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -21,10 +34,7 @@ default:
       - scheduler_failure
       - unknown_failure
   tags:
-    - gke-linux-amd64
-  image: $ARTIFACT_REGISTRY_PROXY_DOCKERHUB/library/ruby:3.4
-  before_script:
-    - bundle install --quiet
+    - gke-linux-amd64-small
 
 stages:
   - validate
@@ -36,37 +46,9 @@ variables:
   OCI_IMAGES_CI_LINUX_REF: $GRP_KO_VAR_OCI_IMAGES_CI_LINUX_REF
   CHE_SCHEMA_REF: $GRP_KO_VAR_CHE_SCHEMA_REF
   PROSE_SPEC_REF: $GRP_KO_VAR_PROSE_SPEC_REF
-  PROSE_ASSETS_REF: $GRP_KO_VAR_PROSE_ASSETS_REF
-  MISC_REF: $GRP_KO_VAR_MISC_REF
+  CENTRALIZED_ASSETS_GENERIC_REF: $GRP_KO_VAR_CENTRALIZED_ASSETS_GENERIC_REF
   AI_TOOLS_CONFIGS_REF: $GRP_KO_VAR_AI_TOOLS_CONFIGS_REF
   CI_IMAGE: $ARTIFACT_REGISTRY/ci-linux:$OCI_IMAGES_CI_LINUX_REF
-
-validate-pre-commit-all:
-  rules:
-    - changes:
-        - .gitlab-ci.yml
-        - .che/**/*
-        - Makefile
-        - lefthook.yml
-        - .repo/*.tpl
-        - .repo/deps-graph.yml
-        - .repo/upstream.yml
-        - .repo/upstream.env
-        - exe/**/*
-        - lib/**/*
-        - test/**/*
-        - Gemfile
-        - Gemfile.lock
-        - README.md
-  tags:
-    - gke-linux-amd64-small
-  stage: validate
-  image: $CI_IMAGE
-  needs: []
-  before_script: []
-  script:
-    - make repo-ci-precommit-all
-    - git diff --exit-code HEAD
 
 #[why] ssh-keygen runs for real against a tmpdir HOME: the image carries openssh-client already,
 #   so the suite needs no platform auth and no network
@@ -80,8 +62,6 @@ unit-tests:
         - Gemfile.lock
         - Makefile
         - .gitlab-ci.yml
-  tags:
-    - gke-linux-amd64-small
   stage: validate
   needs: []
   #[why] ci-linux, not the ruby image: the Makefile runs its recipes under zsh, which the stock
@@ -98,29 +78,4 @@ unit-tests:
     - make install
   script:
     - make test
-
-#[why] a merge to the default branch is the release event: mint the next semver tag so consumers can
-#   pin a version instead of tracking a moving branch. tag only, no release object: nothing here ships
-#   an artifact
-tag-mint:
-  tags:
-    - gke-linux-amd64-small
-  stage: release
-  image: $CI_IMAGE
-  #[why] the default before_script installs gems for the ruby image every other job runs on. this
-  #   job runs on ci-linux, which carries no bundler, so it opts out rather than inheriting it
-  before_script: []
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - exe/**/*
-        - lib/**/*
-        - test/**/*
-        - .che/**/*
-        - Makefile
-  variables:
-    GIT_DEPTH: "0"
-    TAG_TOKEN: $REPO_PROTECTED_VAR_BOT_TAG_TOKEN
-  script:
-    - make tag-mint
 ##[<] 🤖🤖

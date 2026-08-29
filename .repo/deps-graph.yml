@@ -2,15 +2,13 @@
 dependsOn:
   gitlab.com/konradodwrot/user-ssh-util: []
   ciEnv:
-    - uri: gitlab.com/konradodwrot/tools-configs
+    - uri: gitlab.com/konradodwrot/centralized/assets/generic
       type: gitRepository
-    - uri: gitlab.com/konradodwrot/cross-repo/misc
+    - uri: gitlab.com/konradodwrot/tools-configs
       type: gitRepository
     - uri: us-central1-docker.pkg.dev/staging-499418/ci/ci-linux
       type: ociImage
   repoContents:
-    - uri: gitlab.com/konradodwrot/cross-repo/prose/assets
-      type: gitRepository
     - uri: gitlab.com/konradodwrot/cross-repo/prose/spec
       type: gitRepository
   devEnv:

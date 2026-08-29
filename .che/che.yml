@@ -1,7 +1,8 @@
 # yaml-language-server: $schema=https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che-schema/v0.0.1-che-min-v0.0.96/che.schema.json
 ##[>] 🤖🤖
 include:
-  sources: [.che/repo-git-tracked, .che/repo-git-untracked]
+  sources:
+    - {source: shared/generic/che, optional: true}
 
 devEnv:
   options:
@@ -9,4 +10,15 @@ devEnv:
   include:
     installPackages:
       - ruby
+
+genericSetup:
+  options:
+    autoDiscover: false
+  include:
+    profiles:
+      - source: "git::https://gitlab.com/konradodwrot/centralized/assets/generic@${{ var.CENTRALIZED_ASSETS_GENERIC_REF }}"
+        spec: consumer-repo-config
+        profile: setup
+        variables:
+          repo: user-ssh-util
 ##[<] 🤖🤖
