@@ -16,3 +16,4 @@ vendor/
 ##[<] 🤖
 !.repo/
 !.che/
+/.che/cheVariables.local.yml
