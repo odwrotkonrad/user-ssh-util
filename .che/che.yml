@@ -8,12 +8,6 @@ specsInclude:
       repo: user-ssh-util
 
 profilesDefinitions:
-  devEnv:
-    type: repo-git-untracked
-    include:
-      installPackages:
-        - ruby
-
   generic/env:
     type: repo-git-untracked
     include:
@@ -24,14 +18,21 @@ profilesDefinitions:
               options:
                 writeType: mergeUpsert
 
+  devEnv:
+    type: repo-git-untracked
+    include:
+      installPackages:
+        - ruby
+
 variablesDefinitions:
+  all: {scope: recursiveSpecsAndProfiles, required: true}
   specVariablesDefinitions:
-    AI_TOOLS_CONFIGS_REF: {required: true, scope: recursiveSpecsAndProfiles}
-    CENTRALIZED_ASSETS_GENERIC_REF: {required: true, scope: recursiveSpecsAndProfiles}
-    CENTRALIZED_ASSETS_PROSE_AI_REF: {required: true, scope: recursiveSpecsAndProfiles}
-    CENTRALIZED_ASSETS_PROSE_COMMON_REF: {required: true, scope: recursiveSpecsAndProfiles}
-    CENTRALIZED_ASSETS_PROSE_HUMAN_REF: {required: true, scope: recursiveSpecsAndProfiles}
-    CHE_SCHEMA_REF: {required: true, scope: recursiveSpecsAndProfiles}
-    OCI_IMAGES_CI_LINUX_REF: {required: true, scope: recursiveSpecsAndProfiles}
-    PROSE_SPEC_REF: {required: true, scope: recursiveSpecsAndProfiles}
+    AI_TOOLS_CONFIGS_REF: null
+    CENTRALIZED_ASSETS_GENERIC_REF: null
+    CENTRALIZED_ASSETS_PROSE_AI_REF: null
+    CENTRALIZED_ASSETS_PROSE_COMMON_REF: null
+    CENTRALIZED_ASSETS_PROSE_HUMAN_REF: null
+    CHE_SCHEMA_REF: null
+    OCI_IMAGES_CI_LINUX_REF: null
+    PROSE_SPEC_REF: null
 ##[<] 🤖🤖
