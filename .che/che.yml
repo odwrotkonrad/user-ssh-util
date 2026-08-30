@@ -1,24 +1,37 @@
 # yaml-language-server: $schema=https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che-schema/v0.0.1-che-min-v0.0.96/che.schema.json
 ##[>] 🤖🤖
-include:
-  sources:
-    - {source: shared/generic/che, optional: true}
+specsInclude:
+  - url: gitlab.com/konradodwrot/centralized/assets/generic
+    ref: "${{ var.CENTRALIZED_ASSETS_GENERIC_REF }}"
+    specDirPath: consumer-repo-config
+    variables:
+      repo: user-ssh-util
 
-devEnv:
-  options:
-    autoDiscover: false
-  include:
-    installPackages:
-      - ruby
+profilesDefinitions:
+  devEnv:
+    type: repo-git-untracked
+    include:
+      installPackages:
+        - ruby
 
-genericSetup:
-  options:
-    autoDiscover: false
-  include:
-    profiles:
-      - source: "git::https://gitlab.com/konradodwrot/centralized/assets/generic@${{ var.CENTRALIZED_ASSETS_GENERIC_REF }}"
-        spec: consumer-repo-config
-        profile: setup
-        variables:
-          repo: user-ssh-util
+  generic/env:
+    type: repo-git-untracked
+    include:
+      renderTemplates:
+        - source: tpl/repo-git-tracked/env.tpl
+          dest:
+            - path: .env
+              options:
+                writeType: mergeUpsert
+
+variablesDefinitions:
+  specVariablesDefinitions:
+    AI_TOOLS_CONFIGS_REF: {required: true, scope: recursiveSpecsAndProfiles}
+    CENTRALIZED_ASSETS_GENERIC_REF: {required: true, scope: recursiveSpecsAndProfiles}
+    CENTRALIZED_ASSETS_PROSE_AI_REF: {required: true, scope: recursiveSpecsAndProfiles}
+    CENTRALIZED_ASSETS_PROSE_COMMON_REF: {required: true, scope: recursiveSpecsAndProfiles}
+    CENTRALIZED_ASSETS_PROSE_HUMAN_REF: {required: true, scope: recursiveSpecsAndProfiles}
+    CHE_SCHEMA_REF: {required: true, scope: recursiveSpecsAndProfiles}
+    OCI_IMAGES_CI_LINUX_REF: {required: true, scope: recursiveSpecsAndProfiles}
+    PROSE_SPEC_REF: {required: true, scope: recursiveSpecsAndProfiles}
 ##[<] 🤖🤖
