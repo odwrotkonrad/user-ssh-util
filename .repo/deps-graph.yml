@@ -8,7 +8,6 @@ dependsOn:
       type: gitRepository
     - uri: us-central1-docker.pkg.dev/staging-499418/ci/ci-linux
       type: ociImage
-  repoContents:
   devEnv:
     - uri: gitlab.com/konradodwrot/ai-harness/ai-tools-configs
       type: gitRepository
