@@ -6,9 +6,6 @@ upstream:
   - uri: gitlab.com/konradodwrot/ai-harness/ai-tools-configs
     type: gitRepository
     versionEnvVar: AI_TOOLS_CONFIGS_REF
-  - uri: gitlab.com/konradodwrot/cross-repo/prose/spec
-    type: gitRepository
-    versionEnvVar: PROSE_SPEC_REF
   - uri: gitlab.com/konradodwrot/go-modules/che-schema
     type: file
     versionEnvVar: CHE_SCHEMA_REF
